@@ -3,9 +3,10 @@ import sys
 sys.path.insert(0, "cactus/python/src")
 functiongemma_path = "cactus/weights/functiongemma-270m-it"
 
-import json, os, time
+import json, os, random, time
 from cactus import cactus_init, cactus_complete, cactus_destroy
 from google import genai
+from google.genai import errors
 from google.genai import types
 
 
@@ -71,11 +72,14 @@ def generate_cloud(messages, tools):
 
     start_time = time.time()
 
-    gemini_response = client.models.generate_content(
-        model="gemini-3-flash-preview",
-        contents=contents,
-        config=types.GenerateContentConfig(tools=gemini_tools),
-    )
+    def _call_generate_content():
+        return client.models.generate_content(
+            model="gemini-3-flash-preview",
+            contents=contents,
+            config=types.GenerateContentConfig(tools=gemini_tools),
+        )
+
+    gemini_response = _retry_with_backoff(_call_generate_content)
 
     total_time_ms = (time.time() - start_time) * 1000
 
@@ -92,6 +96,22 @@ def generate_cloud(messages, tools):
         "function_calls": function_calls,
         "total_time_ms": total_time_ms,
     }
+
+
+def _retry_with_backoff(fn, max_attempts=6, base_sleep_s=1.0, max_sleep_s=16.0):
+    """Retry transient Gemini API failures with exponential backoff."""
+    for attempt in range(1, max_attempts + 1):
+        try:
+            return fn()
+        except errors.ServerError as exc:
+            if attempt == max_attempts:
+                raise
+            # Retry on temporary service-side errors (e.g. 503 high demand).
+            if exc.code and int(exc.code) not in (500, 502, 503, 504):
+                raise
+            sleep_s = min(max_sleep_s, base_sleep_s * (2 ** (attempt - 1)))
+            jitter = random.uniform(0.0, 0.3 * sleep_s)
+            time.sleep(sleep_s + jitter)
 
 
 def generate_hybrid(messages, tools, confidence_threshold=0.99):
