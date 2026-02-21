@@ -1,7 +1,7 @@
 
 import sys
 sys.path.insert(0, "cactus/python/src")
-functiongemma_path = "cactus/weights/functiongemma-270m-it"
+functiongemma_path = "cactus/weights/lfm2.5-1.2b-instruct"
 
 import json, os, time
 from cactus import cactus_init, cactus_complete, cactus_destroy
@@ -72,7 +72,7 @@ def generate_cloud(messages, tools):
     start_time = time.time()
 
     gemini_response = client.models.generate_content(
-        model="gemini-2.0-flash",
+        model="gemini-2.5-flash",
         contents=contents,
         config=types.GenerateContentConfig(tools=gemini_tools),
     )
