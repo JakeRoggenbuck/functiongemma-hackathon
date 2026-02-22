@@ -4,6 +4,7 @@ sys.path.insert(0, "cactus/python/src")
 functiongemma_path = "cactus/weights/functiongemma-270m-it"
 
 import json, os, random, time
+import re
 from cactus import cactus_init, cactus_complete, cactus_destroy
 from google import genai
 from google.genai import errors
@@ -164,8 +165,183 @@ def _is_hard_or_many_tools(messages, tools):
     return False
 
 
+def _strip_trailing_punct(text):
+    return re.sub(r"[.!?]+$", "", text.strip())
+
+
+def _extract_time_parts(text):
+    match = re.search(r"\b(\d{1,2})(?::(\d{2}))?\s*(a\.?m\.?|p\.?m\.?)\b", text, flags=re.IGNORECASE)
+    if not match:
+        return None
+    hour = int(match.group(1))
+    minute = int(match.group(2) or "0")
+    return hour, minute
+
+
+def _extract_weather_location(clause):
+    patterns = [
+        r"weather(?:\s+like)?\s+in\s+([a-zA-Z][a-zA-Z\s'-]*)",
+        r"weather\s+for\s+([a-zA-Z][a-zA-Z\s'-]*)",
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, clause, flags=re.IGNORECASE)
+        if match:
+            return _strip_trailing_punct(match.group(1))
+    return None
+
+
+def _extract_search_query(clause):
+    patterns = [
+        r"(?:find|look up|search for|search)\s+([a-zA-Z][a-zA-Z\s'-]*?)(?:\s+in my contacts)?$",
+        r"(?:find|look up|search for|search)\s+([a-zA-Z][a-zA-Z\s'-]*)\s+in my contacts",
+    ]
+    cleaned = _strip_trailing_punct(clause)
+    for pattern in patterns:
+        match = re.search(pattern, cleaned, flags=re.IGNORECASE)
+        if match:
+            return _strip_trailing_punct(match.group(1))
+    return None
+
+
+def _extract_timer_minutes(clause):
+    match = re.search(r"\b(\d+)\s*(?:minutes?|mins?)\b", clause, flags=re.IGNORECASE)
+    if match:
+        return int(match.group(1))
+    return None
+
+
+def _extract_song(clause):
+    cleaned = _strip_trailing_punct(clause)
+    match = re.search(r"\bplay\s+(.+)$", cleaned, flags=re.IGNORECASE)
+    if not match:
+        return None
+    song = match.group(1).strip()
+    song = re.sub(r"^some\s+", "", song, flags=re.IGNORECASE)
+    return song.strip()
+
+
+def _extract_reminder(clause):
+    cleaned = _strip_trailing_punct(clause)
+    match = re.search(
+        r"remind me(?:\s+(?:about|to))?\s+(.+?)\s+at\s+(\d{1,2}(?::\d{2})?\s*(?:a\.?m\.?|p\.?m\.?))\b",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    if not match:
+        return None
+    title = _strip_trailing_punct(match.group(1))
+    time_value = match.group(2).upper().replace(".", "")
+    return {"title": title, "time": time_value}
+
+
+def _extract_message(clause, last_contact):
+    cleaned = _strip_trailing_punct(clause)
+    lower = cleaned.lower()
+    if "saying" not in lower:
+        return None
+
+    before, after = re.split(r"\bsaying\b", cleaned, maxsplit=1, flags=re.IGNORECASE)
+    message_text = _strip_trailing_punct(after)
+    if not message_text:
+        return None
+
+    recipient = None
+    to_match = re.search(r"\bto\s+([a-zA-Z][a-zA-Z'-]*)\b", before, flags=re.IGNORECASE)
+    if to_match:
+        recipient = to_match.group(1)
+    if recipient is None:
+        text_match = re.search(r"\btext\s+([a-zA-Z][a-zA-Z'-]*)\b", before, flags=re.IGNORECASE)
+        if text_match:
+            recipient = text_match.group(1)
+    if recipient is None and re.search(r"\b(him|her|them)\b", before, flags=re.IGNORECASE):
+        recipient = last_contact
+
+    if not recipient:
+        return None
+    return {"recipient": recipient, "message": message_text}
+
+
+def _heuristic_local_calls(messages, tools):
+    """Fast local parser for structured assistant requests."""
+    tool_names = {t["name"] for t in tools}
+    user_text = " ".join(m.get("content", "") for m in messages if m.get("role") == "user").strip()
+    if not user_text:
+        return None
+
+    clauses = [
+        c.strip()
+        for c in re.split(r",\s*and\s+|\s+and\s+|,\s+|\s+then\s+|\s+also\s+", user_text, flags=re.IGNORECASE)
+        if c.strip()
+    ]
+
+    calls = []
+    last_contact = None
+    for clause in clauses:
+        lower = clause.lower()
+
+        if "search_contacts" in tool_names and any(k in lower for k in ("find ", "look up ", "search")):
+            query = _extract_search_query(clause)
+            if query:
+                calls.append({"name": "search_contacts", "arguments": {"query": query}})
+                last_contact = query
+                continue
+
+        if "send_message" in tool_names and any(k in lower for k in ("message", "text ", "send ")):
+            msg = _extract_message(clause, last_contact)
+            if msg:
+                calls.append({"name": "send_message", "arguments": msg})
+                continue
+
+        if "get_weather" in tool_names and "weather" in lower:
+            location = _extract_weather_location(clause)
+            if location:
+                calls.append({"name": "get_weather", "arguments": {"location": location}})
+                continue
+
+        if "set_alarm" in tool_names and any(k in lower for k in ("alarm", "wake me up", "wake me")):
+            time_parts = _extract_time_parts(clause)
+            if time_parts:
+                hour, minute = time_parts
+                calls.append({"name": "set_alarm", "arguments": {"hour": hour, "minute": minute}})
+                continue
+
+        if "set_timer" in tool_names and "timer" in lower:
+            minutes = _extract_timer_minutes(clause)
+            if minutes is not None:
+                calls.append({"name": "set_timer", "arguments": {"minutes": minutes}})
+                continue
+
+        if "create_reminder" in tool_names and "remind me" in lower:
+            reminder = _extract_reminder(clause)
+            if reminder:
+                calls.append({"name": "create_reminder", "arguments": reminder})
+                continue
+
+        if "play_music" in tool_names and "play" in lower:
+            song = _extract_song(clause)
+            if song:
+                calls.append({"name": "play_music", "arguments": {"song": song}})
+                continue
+
+    if not calls:
+        return None
+
+    signal_count = _count_action_signals(user_text)
+    confidence = 0.99 if len(calls) >= max(1, signal_count) else 0.75
+    return {
+        "function_calls": calls,
+        "total_time_ms": 0,
+        "confidence": confidence,
+    }
+
+
 def generate_hybrid(messages, tools, confidence_threshold=0.99):
-    """Hybrid strategy: cloud-first for hard/many-tool requests, local-first otherwise."""
+    """Hybrid strategy: deterministic local parse first, then adaptive local/cloud routing."""
+    heuristic_local = _heuristic_local_calls(messages, tools)
+    if heuristic_local and heuristic_local["confidence"] >= 0.99:
+        heuristic_local["source"] = "on-device"
+        return heuristic_local
+
     if _is_hard_or_many_tools(messages, tools):
         cloud = generate_cloud(messages, tools)
         cloud["source"] = "cloud (hard-route)"
@@ -173,7 +349,8 @@ def generate_hybrid(messages, tools, confidence_threshold=0.99):
 
     local = generate_cactus(messages, tools)
 
-    if local["confidence"] >= confidence_threshold:
+    dynamic_threshold = min(confidence_threshold, 0.92)
+    if local["confidence"] >= dynamic_threshold:
         local["source"] = "on-device"
         return local
 
