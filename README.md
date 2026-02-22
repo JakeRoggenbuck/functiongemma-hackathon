@@ -1,10 +1,10 @@
-><img src="assets/banner.png" alt="Logo" style="border-radius: 30px; width: 100%;">
+<img src="assets/banner.png" alt="Logo" style="border-radius: 30px; width: 100%;">
 
 ## Jake's Results
 
 <img width="700" height="638" alt="image" src="https://github.com/user-attachments/assets/2a3ac7f1-b133-4efb-922b-7bd837761562" />
 
-I was able to improve the score by almost 10%. My new router is that much better for local augmented reality applications.
+I was able to improve the score by almost **10%**. My new router is that much better for local augmented reality applications.
 
 ## Context
 - Cactus runs Google DeepMind's FunctionGemma at up to 3000 toks/sec prefill speed on M4 Macs.
