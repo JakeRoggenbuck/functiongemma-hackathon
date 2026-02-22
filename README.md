@@ -1,4 +1,4 @@
-<img width="806" height="630" alt="image" src="https://github.com/user-attachments/assets/541db704-40fa-4bf8-b3b4-cb166539030b" /><img src="assets/banner.png" alt="Logo" style="border-radius: 30px; width: 100%;">
+><img src="assets/banner.png" alt="Logo" style="border-radius: 30px; width: 100%;">
 
 ## Jake's Results
 
