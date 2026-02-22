@@ -30,34 +30,34 @@ Name: Run One
 29 , hard       , timer_music_reminder         ,    1763.45 ,  0.00 , on-device             
 30 , hard       , search_message_weather       ,    3312.72 ,  0.50 , cloud (fallback)
 
-Name: Run Four
-   1 , easy       , weather_sf                   ,    1103.25 ,  1.00 , on-device
-   2 , easy       , alarm_10am                   ,    1428.72 ,  1.00 , cloud (rule-route)
-   3 , easy       , message_alice                ,    1174.85 ,  1.00 , cloud (rule-route)
-   4 , easy       , weather_london               ,    1185.98 ,  1.00 , on-device
-   5 , easy       , alarm_6am                    ,    1834.53 ,  1.00 , cloud (rule-route)
-   6 , easy       , play_bohemian                ,    1276.86 ,  1.00 , on-device
-   7 , easy       , timer_5min                   ,    1091.46 ,  0.00 , on-device
-   8 , easy       , reminder_meeting             ,    1184.58 ,  1.00 , cloud (rule-route)
-   9 , easy       , search_bob                   ,    2812.06 ,  1.00 , cloud (fallback)
-  10 , easy       , weather_paris                ,    1204.68 ,  1.00 , cloud (fallback)
-  11 , medium     , message_among_three          ,    6191.87 ,  1.00 , cloud (rule-route)
-  12 , medium     , weather_among_two            ,     705.96 ,  0.00 , on-device
-  13 , medium     , alarm_among_three            ,    1313.76 ,  1.00 , cloud (rule-route)
-  14 , medium     , music_among_three            ,    1669.98 ,  1.00 , cloud (rule-route)
-  15 , medium     , reminder_among_four          ,    7143.01 ,  1.00 , cloud (rule-route)
-  16 , medium     , timer_among_three            ,    3199.38 ,  1.00 , cloud (rule-route)
-  17 , medium     , search_among_four            ,    3896.98 ,  1.00 , cloud (rule-route)
-  18 , medium     , weather_among_four           ,    1189.90 ,  1.00 , cloud (rule-route)
-  19 , medium     , message_among_four           ,    2193.85 ,  0.00 , cloud (rule-route)
-  20 , medium     , alarm_among_five             ,    1328.56 ,  1.00 , cloud (rule-route)
-  21 , hard       , message_and_weather          ,    8163.05 ,  1.00 , cloud (rule-route)
-  22 , hard       , alarm_and_weather            ,    1655.75 ,  1.00 , cloud (rule-route)
-  23 , hard       , timer_and_music              ,    2229.17 ,  1.00 , cloud (rule-route)
-  24 , hard       , reminder_and_message         ,    1788.03 ,  1.00 , cloud (rule-route)
-  25 , hard       , search_and_message           ,    9996.68 ,  1.00 , cloud (rule-route)
-  26 , hard       , alarm_and_reminder           ,    8826.58 ,  1.00 , cloud (rule-route)
-  27 , hard       , weather_and_music            ,    1557.78 ,  1.00 , cloud (rule-route)
-  28 , hard       , message_weather_alarm        ,    9045.92 ,  1.00 , cloud (rule-route)
-  29 , hard       , timer_music_reminder         ,    1851.98 ,  1.00 , cloud (rule-route)
-  30 , hard       , search_message_weather       ,    2176.58 ,  1.00 , cloud (rule-route)
+Name: Run Five
+   1 , easy       , weather_sf                   ,    1099.27 ,  1.00 , on-device
+   2 , easy       , alarm_10am                   ,    1128.87 ,  1.00 , cloud (rule-route)
+   3 , easy       , message_alice                ,    1530.19 ,  1.00 , cloud (rule-route)
+   4 , easy       , weather_london               ,    1222.59 ,  1.00 , on-device
+   5 , easy       , alarm_6am                    ,    2214.45 ,  1.00 , cloud (rule-route)
+   6 , easy       , play_bohemian                ,    1304.57 ,  1.00 , on-device
+   7 , easy       , timer_5min                   ,    1158.63 ,  1.00 , on-device
+   8 , easy       , reminder_meeting             ,    1345.96 ,  1.00 , cloud (rule-route)
+   9 , easy       , search_bob                   ,    2596.23 ,  1.00 , cloud (fallback)
+  10 , easy       , weather_paris                ,    1091.27 ,  1.00 , on-device
+  11 , medium     , message_among_three          ,    1059.45 ,  1.00 , cloud (rule-route)
+  12 , medium     , weather_among_two            ,    2261.01 ,  1.00 , cloud (rule-route)
+  13 , medium     , alarm_among_three            ,    1227.85 ,  1.00 , cloud (rule-route)
+  14 , medium     , music_among_three            ,    1386.41 ,  1.00 , cloud (rule-route)
+  15 , medium     , reminder_among_four          ,    1097.04 ,  1.00 , cloud (rule-route)
+  16 , medium     , timer_among_three            ,    6398.13 ,  1.00 , cloud (rule-route)
+  17 , medium     , search_among_four            ,     921.50 ,  1.00 , cloud (rule-route)
+  18 , medium     , weather_among_four           ,    4741.96 ,  1.00 , cloud (rule-route)
+  19 , medium     , message_among_four           ,    4065.21 ,  0.00 , cloud (rule-route)
+  20 , medium     , alarm_among_five             ,    1227.11 ,  1.00 , cloud (rule-route)
+  21 , hard       , message_and_weather          ,    1773.35 ,  1.00 , cloud (rule-route)
+  22 , hard       , alarm_and_weather            ,    1806.62 ,  1.00 , cloud (rule-route)
+  23 , hard       , timer_and_music              ,    2851.44 ,  1.00 , cloud (rule-route)
+  24 , hard       , reminder_and_message         ,    2132.46 ,  1.00 , cloud (rule-route)
+  25 , hard       , search_and_message           ,    2946.06 ,  1.00 , cloud (rule-route)
+  26 , hard       , alarm_and_reminder           ,   20787.68 ,  1.00 , cloud (rule-route)
+  27 , hard       , weather_and_music            ,    1787.01 ,  1.00 , cloud (rule-route)
+  28 , hard       , message_weather_alarm        ,    1420.00 ,  1.00 , cloud (rule-route)
+  29 , hard       , timer_music_reminder         ,    1764.05 ,  1.00 , cloud (rule-route)
+  30 , hard       , search_message_weather       ,    1821.52 ,  1.00 , cloud (rule-route)
