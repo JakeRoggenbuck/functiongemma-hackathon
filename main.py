@@ -142,33 +142,24 @@ def _count_action_signals(text):
 
 def _is_hard_or_many_tools(messages, tools):
     """
-    Route hard requests to cloud directly:
-    - many candidate tools
-    - clear multi-action phrasing
-    - multiple distinct action intents
+    Simple cloud-routing rule:
+    - If multiple tools are in play, use cloud.
+    - If user asks for multiple actions, use cloud.
     """
     user_text = " ".join(m.get("content", "") for m in messages if m.get("role") == "user")
     lowered = user_text.lower()
     tool_count = len(tools)
     action_count = _count_action_signals(user_text)
-    connector_count = sum(lowered.count(tok) for tok in (" and ", ", and ", ", then ", " then ", " also "))
+    connector_count = sum(lowered.count(tok) for tok in (" and ", ", and ", ", then ", " then ", " also ", ";"))
 
-    if tool_count >= 5:
-        return True
-    if action_count >= 2:
-        return True
-    if connector_count >= 2:
-        return True
-    if connector_count >= 1 and action_count >= 1 and tool_count >= 3:
-        return True
-    return False
+    return tool_count >= 2 or action_count >= 2 or connector_count >= 1
 
 
 def generate_hybrid(messages, tools, confidence_threshold=0.99):
-    """Hybrid strategy: cloud-first for hard/many-tool requests, local-first otherwise."""
+    """Hybrid strategy with simple cloud routing for multi-tool or multi-action requests."""
     if _is_hard_or_many_tools(messages, tools):
         cloud = generate_cloud(messages, tools)
-        cloud["source"] = "cloud (hard-route)"
+        cloud["source"] = "cloud (rule-route)"
         return cloud
 
     local = generate_cactus(messages, tools)
