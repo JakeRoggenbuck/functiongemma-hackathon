@@ -13,7 +13,8 @@ TOOL_CALL_SYSTEM_PROMPT = (
     "You are a precise tool-calling assistant. "
     "Return only the function call JSON. "
     "Use exact tool names and infer concise, explicit argument values from the user request. "
-    "If the user asks for multiple actions, emit all required function calls."
+    "If the user asks for multiple actions, emit all required function calls. "
+    "Resolve pronouns and references (for example 'him' or 'her') using entities earlier in the same request."
 )
 
 
@@ -147,7 +148,7 @@ def _is_hard_or_many_tools(messages, tools):
     """
     Generic routing rule (no benchmark hardcoding):
     - Cloud for multi-action requests.
-    - Cloud when tool selection is highly ambiguous (3+ candidate tools).
+    - Cloud when tool selection is ambiguous (2+ candidate tools).
     - Cloud for single-tool schemas with 2+ required fields.
     """
     user_text = " ".join(m.get("content", "") for m in messages if m.get("role") == "user")
@@ -160,7 +161,7 @@ def _is_hard_or_many_tools(messages, tools):
     if action_count >= 2 or connector_count >= 1:
         return True
 
-    if tool_count >= 3:
+    if tool_count >= 2:
         return True
 
     if tool_count == 1 and max_required >= 2:
