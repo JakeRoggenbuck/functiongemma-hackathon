@@ -85,7 +85,7 @@ def generate_cloud(messages, tools):
     start_time = time.time()
 
     gemini_response = client.models.generate_content(
-        model="gemini-2-flash-preview",
+        model="gemini-3-flash-preview",
         contents=contents,
         config=types.GenerateContentConfig(tools=gemini_tools),
     )
