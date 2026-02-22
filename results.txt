@@ -30,35 +30,34 @@ Name: Run One
 29 , hard       , timer_music_reminder         ,    1763.45 ,  0.00 , on-device             
 30 , hard       , search_message_weather       ,    3312.72 ,  0.50 , cloud (fallback)
 
-Name: Run Two
-   1 , easy       , weather_sf                   ,    3617.26 ,  1.00 , on-device                                                                                                  
-   2 , easy       , alarm_10am                   ,   11105.13 ,  1.00 , cloud (fallback)                                                                                           
-   3 , easy       , message_alice                ,   14834.23 ,  1.00 , cloud (fallback)
-   4 , easy       , weather_london               ,   15338.06 ,  1.00 , on-device
-   5 , easy       , alarm_6am                    ,   25091.96 ,  1.00 , cloud (fallback)
-   6 , easy       , play_bohemian                ,    7650.24 ,  1.00 , on-device
-   7 , easy       , timer_5min                   ,   17306.37 ,  1.00 , cloud (fallback)
-   8 , easy       , reminder_meeting             ,   14734.25 ,  0.00 , on-device
-   9 , easy       , search_bob                   ,   18318.96 ,  1.00 , on-device
-  10 , easy       , weather_paris                ,   14416.25 ,  1.00 , on-device
-  11 , medium     , message_among_three          ,   23855.96 ,  1.00 , on-device
-  12 , medium     , weather_among_two            ,    7481.82 ,  1.00 , on-device
-  13 , medium     , alarm_among_three            ,   32779.30 ,  1.00 , cloud (fallback)
-  14 , medium     , music_among_three            ,    9998.01 ,  1.00 , on-device
-  15 , medium     , reminder_among_four          ,   43335.32 ,  1.00 , cloud (fallback)
-  16 , medium     , timer_among_three            ,   18049.40 ,  0.00 , on-device
-  17 , medium     , search_among_four            ,   22655.65 ,  1.00 , on-device
-  18 , medium     , weather_among_four           ,    7749.74 ,  1.00 , on-device
-  19 , medium     , message_among_four           ,   33551.29 ,  0.00 , cloud (fallback)
-  20 , medium     , alarm_among_five             ,   34335.86 ,  1.00 , cloud (fallback)
-  21 , hard       , message_and_weather          ,   13797.61 ,  0.50 , on-device
-  22 , hard       , alarm_and_weather            ,   31304.54 ,  0.50 , on-device
-  23 , hard       , timer_and_music              ,   38801.12 ,  1.00 , cloud (fallback)
-  24 , hard       , reminder_and_message         ,   27604.67 ,  0.00 , on-device
-  25 , hard       , search_and_message           ,   26081.64 ,  0.00 , on-device
-  26 , hard       , alarm_and_reminder           ,   35864.92 ,  0.00 , on-device
-  27 , hard       , weather_and_music            ,   36604.60 ,  1.00 , cloud (fallback)
-  28 , hard       , message_weather_alarm        ,   57335.88 ,  0.67 , cloud (fallback)
-  29 , hard       , timer_music_reminder         ,   15627.82 ,  1.00 , cloud (fallback)
-  30 , hard       , search_message_weather       ,   32114.75 ,  0.50 , cloud (fallback)
-
+Name: Run Three
+   1 , easy       , weather_sf                   ,     741.72 ,  1.00 , on-device
+   2 , easy       , alarm_10am                   ,    2009.73 ,  1.00 , cloud (fallback)
+   3 , easy       , message_alice                ,    1348.89 ,  1.00 , on-device
+   4 , easy       , weather_london               ,    2471.13 ,  1.00 , cloud (fallback)
+   5 , easy       , alarm_6am                    ,    3357.96 ,  1.00 , cloud (fallback)
+   6 , easy       , play_bohemian                ,    1104.71 ,  1.00 , on-device
+   7 , easy       , timer_5min                   ,     902.91 ,  0.00 , on-device
+   8 , easy       , reminder_meeting             ,     783.44 ,  0.00 , on-device
+   9 , easy       , search_bob                   ,    5417.34 ,  1.00 , cloud (fallback)
+  10 , easy       , weather_paris                ,     706.37 ,  1.00 , on-device
+  11 , medium     , message_among_three          ,    3673.45 ,  1.00 , cloud (fallback)
+  12 , medium     , weather_among_two            ,    1150.34 ,  1.00 , on-device
+  13 , medium     , alarm_among_three            ,    1777.72 ,  1.00 , on-device
+  14 , medium     , music_among_three            ,    3340.96 ,  1.00 , cloud (fallback)
+  15 , medium     , reminder_among_four          ,    3716.74 ,  1.00 , cloud (fallback)
+  16 , medium     , timer_among_three            ,    1398.90 ,  0.00 , on-device
+  17 , medium     , search_among_four            ,    2779.31 ,  1.00 , cloud (fallback)
+  18 , medium     , weather_among_four           ,    1370.83 ,  0.00 , on-device
+  19 , medium     , message_among_four           ,    3935.39 ,  0.00 , cloud (fallback)
+  20 , medium     , alarm_among_five             ,    1642.34 ,  0.00 , on-device
+  21 , hard       , message_and_weather          ,    4625.70 ,  1.00 , cloud (fallback)
+  22 , hard       , alarm_and_weather            ,    1643.05 ,  0.67 , on-device
+  23 , hard       , timer_and_music              ,    1504.77 ,  0.00 , on-device
+  24 , hard       , reminder_and_message         ,    4037.79 ,  1.00 , cloud (fallback)
+  25 , hard       , search_and_message           ,    3803.67 ,  0.67 , cloud (fallback)
+  26 , hard       , alarm_and_reminder           ,    1903.83 ,  0.67 , on-device
+  27 , hard       , weather_and_music            ,    8636.98 ,  1.00 , cloud (fallback)
+  28 , hard       , message_weather_alarm        ,   12972.99 ,  1.00 , cloud (fallback)
+  29 , hard       , timer_music_reminder         ,    1722.52 ,  0.00 , on-device
+  30 , hard       , search_message_weather       ,   13752.22 ,  0.80 , cloud (fallback)
