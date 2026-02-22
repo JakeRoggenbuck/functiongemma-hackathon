@@ -140,25 +140,62 @@ def _count_action_signals(text):
     return matches
 
 
+def _expected_action_count(user_text):
+    """Estimate requested action count from intent signals and sentence connectors."""
+    lowered = user_text.lower()
+    action_signals = _count_action_signals(user_text)
+    connector_hits = sum(lowered.count(tok) for tok in (" and ", ", and ", ", then ", " then ", " also ", ";"))
+    if action_signals <= 1 and connector_hits == 0:
+        return 1
+    # A connector usually indicates at least one extra action segment.
+    return max(action_signals, 1 + connector_hits)
+
+
 def _is_hard_or_many_tools(messages, tools):
     """
-    Simple cloud-routing rule:
-    - If multiple tools are in play, use cloud.
-    - If user asks for multiple actions, use cloud.
+    Route to cloud when complexity is likely high.
+    Prioritize hard-task F1:
+    - multi-action request -> cloud
+    - very large toolset -> cloud
+    - single tool with many required args -> cloud
     """
     user_text = " ".join(m.get("content", "") for m in messages if m.get("role") == "user")
-    lowered = user_text.lower()
+    expected_actions = _expected_action_count(user_text)
     tool_count = len(tools)
-    action_count = _count_action_signals(user_text)
-    connector_count = sum(lowered.count(tok) for tok in (" and ", ", and ", ", then ", " then ", " also ", ";"))
 
-    return tool_count >= 2 or action_count >= 2 or connector_count >= 1
+    if expected_actions >= 2:
+        return True
+
+    if tool_count >= 4:
+        return True
+
+    if tool_count == 1:
+        required = len(tools[0].get("parameters", {}).get("required", []))
+        if required >= 2:
+            return True
+
+    return False
+
+
+def _generate_cloud_with_min_calls(messages, tools, min_calls=1):
+    """Call cloud once, and retry once if output likely missed actions."""
+    first = generate_cloud(messages, tools)
+    if len(first.get("function_calls", [])) >= min_calls:
+        return first
+
+    second = generate_cloud(messages, tools)
+    if len(second.get("function_calls", [])) > len(first.get("function_calls", [])):
+        return second
+    return first
 
 
 def generate_hybrid(messages, tools, confidence_threshold=0.99):
     """Hybrid strategy with simple cloud routing for multi-tool or multi-action requests."""
+    user_text = " ".join(m.get("content", "") for m in messages if m.get("role") == "user")
+    expected_actions = _expected_action_count(user_text)
+
     if _is_hard_or_many_tools(messages, tools):
-        cloud = generate_cloud(messages, tools)
+        cloud = _generate_cloud_with_min_calls(messages, tools, min_calls=expected_actions)
         cloud["source"] = "cloud (rule-route)"
         return cloud
 
