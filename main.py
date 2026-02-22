@@ -9,6 +9,13 @@ from google import genai
 from google.genai import errors
 from google.genai import types
 
+TOOL_CALL_SYSTEM_PROMPT = (
+    "You are a precise tool-calling assistant. "
+    "Return only the function call JSON. "
+    "Use exact tool names and infer concise, explicit argument values from the user request. "
+    "If the user asks for multiple actions, emit all required function calls."
+)
+
 
 def generate_cactus(messages, tools):
     """Run function calling on-device via FunctionGemma + Cactus."""
@@ -21,7 +28,7 @@ def generate_cactus(messages, tools):
 
     raw_str = cactus_complete(
         model,
-        [{"role": "system", "content": "You are a helpful assistant that can use tools."}] + messages,
+        [{"role": "system", "content": TOOL_CALL_SYSTEM_PROMPT}] + messages,
         tools=cactus_tools,
         force_tools=True,
         max_tokens=256,
@@ -114,8 +121,56 @@ def _retry_with_backoff(fn, max_attempts=6, base_sleep_s=1.0, max_sleep_s=16.0):
             time.sleep(sleep_s + jitter)
 
 
+def _count_action_signals(text):
+    """Estimate how many distinct actions the user is asking for."""
+    lowered = text.lower()
+    signal_groups = [
+        {"weather", "temperature", "forecast"},
+        {"alarm", "wake me", "wake-up"},
+        {"message", "text", "send"},
+        {"remind", "reminder"},
+        {"contact", "contacts", "find", "look up", "search"},
+        {"play", "music", "song", "playlist"},
+        {"timer", "countdown"},
+    ]
+    matches = 0
+    for keywords in signal_groups:
+        if any(k in lowered for k in keywords):
+            matches += 1
+    return matches
+
+
+def _is_hard_or_many_tools(messages, tools):
+    """
+    Route hard requests to cloud directly:
+    - many candidate tools
+    - clear multi-action phrasing
+    - multiple distinct action intents
+    """
+    user_text = " ".join(m.get("content", "") for m in messages if m.get("role") == "user")
+    lowered = user_text.lower()
+    tool_count = len(tools)
+    action_count = _count_action_signals(user_text)
+    connector_count = sum(lowered.count(tok) for tok in (" and ", ", and ", ", then ", " then ", " also "))
+
+    if tool_count >= 5:
+        return True
+    if action_count >= 2:
+        return True
+    if connector_count >= 2:
+        return True
+    if connector_count >= 1 and action_count >= 1 and tool_count >= 3:
+        return True
+    return False
+
+
 def generate_hybrid(messages, tools, confidence_threshold=0.99):
-    """Baseline hybrid inference strategy; fall back to cloud if Cactus Confidence is below threshold."""
+    """Hybrid strategy: cloud-first for hard/many-tool requests, local-first otherwise."""
+    if _is_hard_or_many_tools(messages, tools):
+        cloud = generate_cloud(messages, tools)
+        cloud["source"] = "cloud (hard-route)"
+        return cloud
+
     local = generate_cactus(messages, tools)
 
     if local["confidence"] >= confidence_threshold:
