@@ -80,7 +80,6 @@ def plot_comparison(runs: dict[str, list[dict[str, object]]], output_path: Path,
         scores = [float(r["score"]) for r in rows]
 
         ax_latency.plot(x, latencies, marker="o", linewidth=1.5, markersize=3, label=run_name, color=colors[i])
-        ax_score.plot(x, scores, marker="o", linewidth=1.5, markersize=3, label=run_name, color=colors[i])
 
         avg_latency_by_diff = [
             average([float(r["latency_ms"]) for r in rows if r["difficulty"] == diff]) for diff in difficulties
@@ -91,16 +90,30 @@ def plot_comparison(runs: dict[str, list[dict[str, object]]], output_path: Path,
         ax_diff_latency.bar(x_positions + offset, avg_latency_by_diff, width=width, label=run_name, color=colors[i])
         ax_diff_score.bar(x_positions + offset, avg_score_by_diff, width=width, label=run_name, color=colors[i])
 
+    # Replace per-case correctness line chart with two bars:
+    # correct-case counts (F1 == 1.0) for the first two runs.
+    selected_runs = run_names[:2]
+    correct_counts = []
+    for run_name in selected_runs:
+        rows = runs[run_name]
+        count = sum(1 for r in rows if np.isclose(float(r["score"]), 1.0))
+        correct_counts.append(count)
+    bar_colors = [colors[i] for i in range(len(selected_runs))]
+    ax_score.bar(selected_runs, correct_counts, color=bar_colors)
+    for i, count in enumerate(correct_counts):
+        ax_score.text(i, count + 0.2, str(count), ha="center", va="bottom", fontsize=10)
+
     ax_latency.set_title("Latency per Case")
     ax_latency.set_xlabel("Case Index")
     ax_latency.set_ylabel("Latency (ms)")
     ax_latency.grid(alpha=0.25)
 
-    ax_score.set_title("Correctness Score per Case")
-    ax_score.set_xlabel("Case Index")
-    ax_score.set_ylabel("Score")
-    ax_score.set_ylim(0.0, 1.05)
-    ax_score.grid(alpha=0.25)
+    total_cases = max((len(rows) for rows in runs.values()), default=0)
+    ax_score.set_title("Correct Case Count (Run One vs Run Two)")
+    ax_score.set_xlabel("Run")
+    ax_score.set_ylabel("Correct Cases (F1 = 1.0)")
+    ax_score.set_ylim(0, total_cases + 1)
+    ax_score.grid(axis="y", alpha=0.25)
 
     ax_diff_latency.set_title("Average Latency by Difficulty")
     ax_diff_latency.set_xticks(x_positions, difficulties)
