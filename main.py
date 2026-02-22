@@ -3,18 +3,18 @@ import sys
 sys.path.insert(0, "cactus/python/src")
 functiongemma_path = "cactus/weights/functiongemma-270m-it"
 
-import json, os, random, time
+import json, os, time
 from cactus import cactus_init, cactus_complete, cactus_destroy
 from google import genai
-from google.genai import errors
 from google.genai import types
 
-TOOL_CALL_SYSTEM_PROMPT = (
-    "You are a precise tool-calling assistant. "
-    "Return only the function call JSON. "
-    "Use exact tool names and infer concise, explicit argument values from the user request. "
-    "If the user asks for multiple actions, emit all required function calls. "
-    "Resolve pronouns and references (for example 'him' or 'her') using entities earlier in the same request."
+SYSTEM_PROMPT = (
+    "You are a precise function-calling assistant. "
+    "Return function calls only using the provided tools. "
+    "If the user requests multiple actions, return multiple function calls in the same order. "
+    "Use exact tool names and fill all required arguments from the user request. "
+    "Resolve references like 'him' or 'her' from earlier entities in the same message. "
+    "Do not add extra calls unrelated to the request."
 )
 
 
@@ -29,7 +29,7 @@ def generate_cactus(messages, tools):
 
     raw_str = cactus_complete(
         model,
-        [{"role": "system", "content": TOOL_CALL_SYSTEM_PROMPT}] + messages,
+        [{"role": "system", "content": SYSTEM_PROMPT}] + messages,
         tools=cactus_tools,
         force_tools=True,
         max_tokens=256,
@@ -76,21 +76,15 @@ def generate_cloud(messages, tools):
         ])
     ]
 
-    contents = [TOOL_CALL_SYSTEM_PROMPT] + [m["content"] for m in messages if m["role"] == "user"]
+    contents = [SYSTEM_PROMPT] + [m["content"] for m in messages if m["role"] == "user"]
 
     start_time = time.time()
 
-    def _call_generate_content():
-        return client.models.generate_content(
-            model="gemini-3-flash-preview",
-            contents=contents,
-            config=types.GenerateContentConfig(
-                tools=gemini_tools,
-                temperature=0.0,
-            ),
-        )
-
-    gemini_response = _retry_with_backoff(_call_generate_content)
+    gemini_response = client.models.generate_content(
+        model="gemini-2-flash-preview",
+        contents=contents,
+        config=types.GenerateContentConfig(tools=gemini_tools),
+    )
 
     total_time_ms = (time.time() - start_time) * 1000
 
@@ -109,74 +103,8 @@ def generate_cloud(messages, tools):
     }
 
 
-def _retry_with_backoff(fn, max_attempts=6, base_sleep_s=1.0, max_sleep_s=16.0):
-    """Retry transient Gemini API failures with exponential backoff."""
-    for attempt in range(1, max_attempts + 1):
-        try:
-            return fn()
-        except errors.ServerError as exc:
-            if attempt == max_attempts:
-                raise
-            # Retry on temporary service-side errors (e.g. 503 high demand).
-            if exc.code and int(exc.code) not in (500, 502, 503, 504):
-                raise
-            sleep_s = min(max_sleep_s, base_sleep_s * (2 ** (attempt - 1)))
-            jitter = random.uniform(0.0, 0.3 * sleep_s)
-            time.sleep(sleep_s + jitter)
-
-
-def _count_action_signals(text):
-    """Estimate how many distinct actions the user is asking for."""
-    lowered = text.lower()
-    signal_groups = [
-        {"weather", "temperature", "forecast"},
-        {"alarm", "wake me", "wake-up"},
-        {"message", "text", "send"},
-        {"remind", "reminder"},
-        {"contact", "contacts", "find", "look up", "search"},
-        {"play", "music", "song", "playlist"},
-        {"timer", "countdown"},
-    ]
-    matches = 0
-    for keywords in signal_groups:
-        if any(k in lowered for k in keywords):
-            matches += 1
-    return matches
-
-
-def _is_hard_or_many_tools(messages, tools):
-    """
-    Generic routing rule (no benchmark hardcoding):
-    - Cloud for multi-action requests.
-    - Cloud when tool selection is ambiguous (2+ candidate tools).
-    - Cloud for single-tool schemas with 2+ required fields.
-    """
-    user_text = " ".join(m.get("content", "") for m in messages if m.get("role") == "user")
-    lowered = user_text.lower()
-    tool_count = len(tools)
-    action_count = _count_action_signals(user_text)
-    connector_count = sum(lowered.count(tok) for tok in (" and ", ", and ", ", then ", " then ", " also ", ";"))
-    max_required = max((len(t.get("parameters", {}).get("required", [])) for t in tools), default=0)
-
-    if action_count >= 2 or connector_count >= 1:
-        return True
-
-    if tool_count >= 2:
-        return True
-
-    if tool_count == 1 and max_required >= 2:
-        return True
-
-    return False
-
-
 def generate_hybrid(messages, tools, confidence_threshold=0.99):
-    """Hybrid strategy: cloud for complex requests, local-first for simple requests."""
-    if _is_hard_or_many_tools(messages, tools):
-        cloud = generate_cloud(messages, tools)
-        cloud["source"] = "cloud (rule-route)"
-        return cloud
-
+    """Baseline hybrid inference strategy; fall back to cloud if Cactus Confidence is below threshold."""
     local = generate_cactus(messages, tools)
 
     if local["confidence"] >= confidence_threshold:
